@@ -6,6 +6,8 @@ namespace Challenge\Tests\Unit\Cache;
 
 use Challenge\Cache\InvalidCacheKeyException;
 use Challenge\Cache\MemoryCacheItemPool;
+use DateTimeImmutable;
+use Psr\Clock\ClockInterface;
 use PHPUnit\Framework\TestCase;
 
 final class MemoryCacheItemPoolTest extends TestCase
@@ -28,11 +30,15 @@ final class MemoryCacheItemPoolTest extends TestCase
 
     public function testExpiresCacheItem(): void
     {
-        $pool = new MemoryCacheItemPool();
+        $clock = new MutableClock(new DateTimeImmutable('2026-05-19 12:00:00 UTC'));
+        $pool = new MemoryCacheItemPool($clock);
 
         $item = $pool->getItem('short_lived_key');
-        $item->set('stale')->expiresAfter(-1);
+        $item->set('stale')->expiresAfter(10);
         self::assertTrue($pool->save($item));
+        self::assertTrue($pool->hasItem('short_lived_key'));
+
+        $clock->advanceSeconds(11);
 
         $cachedItem = $pool->getItem('short_lived_key');
 
@@ -61,5 +67,22 @@ final class MemoryCacheItemPoolTest extends TestCase
         $this->expectException(InvalidCacheKeyException::class);
 
         $pool->getItem('invalid/key');
+    }
+}
+
+final class MutableClock implements ClockInterface
+{
+    public function __construct(private DateTimeImmutable $now)
+    {
+    }
+
+    public function now(): DateTimeImmutable
+    {
+        return $this->now;
+    }
+
+    public function advanceSeconds(int $seconds): void
+    {
+        $this->now = $this->now->modify('+' . $seconds . ' seconds');
     }
 }
