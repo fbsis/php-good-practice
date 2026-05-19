@@ -9,7 +9,9 @@ use Challenge\Controllers\HealthController;
 use Challenge\Controllers\SegmentPreviewController;
 use Challenge\Database\ConnectionFactory;
 use Challenge\Repositories\VisitorAnalyticsRepository;
+use Challenge\Services\SegmentPreviewService;
 use Challenge\Services\VisitorAnalyticsService;
+use Challenge\Validation\SegmentPreviewValidator;
 use Slim\App;
 use Slim\Factory\AppFactory as SlimAppFactory;
 
@@ -23,10 +25,12 @@ final class AppFactory
         $pdo = ConnectionFactory::createFromEnvironment();
         $visitorAnalyticsRepository = new VisitorAnalyticsRepository($pdo);
         $visitorAnalyticsService = new VisitorAnalyticsService($visitorAnalyticsRepository);
+        $segmentPreviewService = new SegmentPreviewService($visitorAnalyticsRepository);
+        $segmentPreviewValidator = new SegmentPreviewValidator();
 
         $healthController = new HealthController($pdo);
         $activeVisitorsController = new ActiveVisitorsController($visitorAnalyticsService);
-        $segmentPreviewController = new SegmentPreviewController();
+        $segmentPreviewController = new SegmentPreviewController($segmentPreviewValidator, $segmentPreviewService);
 
         $app->get('/health', $healthController);
         $app->get('/api/accounts/{accountId}/visitors/active', $activeVisitorsController);
