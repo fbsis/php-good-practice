@@ -9,11 +9,14 @@ use DateTimeImmutable;
 
 final class SegmentPreviewValidator
 {
-    public function validate(mixed $payload): ValidationResult
+    /**
+     * @param array<string, array<string, string|int|bool>|int>|null $payload
+     */
+    public function validate(?array $payload): ValidationResult
     {
         $fields = [];
 
-        if (!is_array($payload)) {
+        if ($payload === null) {
             return ValidationResult::invalid([
                 'body' => ['Must be a JSON object.'],
             ]);

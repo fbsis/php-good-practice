@@ -26,7 +26,7 @@ abstract class IntegrationTestCase extends TestCase
 
     /**
      * @param array<string, string> $query
-     * @param array<string, mixed>|null $json
+     * @param array<string, scalar|array<array-key, scalar|null>|null>|null $json
      */
     protected function request(string $method, string $path, array $query = [], ?array $json = null): ResponseInterface
     {
@@ -50,7 +50,7 @@ abstract class IntegrationTestCase extends TestCase
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array<string, scalar|array<array-key, scalar|array<array-key, scalar|null>|null>|null>
      */
     protected function json(ResponseInterface $response): array
     {
@@ -65,4 +65,3 @@ abstract class IntegrationTestCase extends TestCase
         $this->pdo->exec($sql);
     }
 }
-

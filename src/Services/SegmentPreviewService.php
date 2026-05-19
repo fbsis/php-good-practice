@@ -14,7 +14,7 @@ final class SegmentPreviewService
     }
 
     /**
-     * @return array{count: int, visitors: list<array<string, mixed>>}
+     * @return array{count: int, visitors: list<array<string, scalar|null>>}
      */
     public function preview(int $accountId, SegmentPreviewCriteria $criteria): array
     {

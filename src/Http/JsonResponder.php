@@ -9,7 +9,7 @@ use Psr\Http\Message\ResponseInterface as Response;
 final class JsonResponder
 {
     /**
-     * @param array<string, mixed> $payload
+     * @param array<string, scalar|array<array-key, scalar|array<array-key, scalar|null>|null>|null> $payload
      */
     public static function json(Response $response, array $payload, int $status = 200): Response
     {
@@ -20,4 +20,3 @@ final class JsonResponder
             ->withStatus($status);
     }
 }
-

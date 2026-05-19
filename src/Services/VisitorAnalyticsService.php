@@ -13,7 +13,7 @@ final class VisitorAnalyticsService
     }
 
     /**
-     * @return list<array<string, mixed>>
+     * @return list<array<string, scalar|null>>
      */
     public function activeVisitors(int $accountId, string $from, string $to): array
     {

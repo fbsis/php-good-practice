@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Challenge\Validation;
 
+use Challenge\Dto\SegmentPreviewCriteria;
+
 final readonly class ValidationResult
 {
     /**
@@ -12,11 +14,11 @@ final readonly class ValidationResult
     private function __construct(
         public bool $valid,
         public array $fields,
-        public mixed $value,
+        public ?SegmentPreviewCriteria $value,
     ) {
     }
 
-    public static function valid(mixed $value): self
+    public static function valid(SegmentPreviewCriteria $value): self
     {
         return new self(true, [], $value);
     }

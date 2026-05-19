@@ -50,8 +50,8 @@ final class StderrLogger extends AbstractLogger
     }
 
     /**
-     * @param mixed $level
-     * @param array<string, mixed> $context
+     * @param string|Stringable $level
+     * @param array<string, scalar|Stringable|Throwable|array<array-key, scalar|Stringable|Throwable|object|resource|null>|object|resource|null> $context
      */
     public function log($level, string|Stringable $message, array $context = []): void
     {
@@ -69,7 +69,7 @@ final class StderrLogger extends AbstractLogger
     }
 
     /**
-     * @param array<string, mixed> $context
+     * @param array<string, scalar|Stringable|Throwable|array<array-key, scalar|Stringable|Throwable|object|resource|null>|object|resource|null> $context
      */
     private function interpolate(string $message, array $context): string
     {
@@ -85,8 +85,8 @@ final class StderrLogger extends AbstractLogger
     }
 
     /**
-     * @param array<string, mixed> $context
-     * @return array<string, mixed>
+     * @param array<string, scalar|Stringable|Throwable|array<array-key, scalar|Stringable|Throwable|object|resource|null>|object|resource|null> $context
+     * @return array<string, scalar|array<array-key, scalar|array<string, scalar>|null>|null>
      */
     private function normalizeContext(array $context): array
     {
@@ -99,7 +99,11 @@ final class StderrLogger extends AbstractLogger
         return $normalized;
     }
 
-    private function normalizeValue(mixed $value): mixed
+    /**
+     * @param scalar|Stringable|Throwable|array<array-key, scalar|Stringable|Throwable|object|resource|null>|object|resource|null $value
+     * @return scalar|array<array-key, scalar|array<string, scalar>|null>|null
+     */
+    private function normalizeValue($value): string|int|float|bool|array|null
     {
         if ($value instanceof Throwable) {
             return [
