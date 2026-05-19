@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Challenge\Cache;
 
 use DateInterval;
-use DateTimeImmutable;
 use DateTimeInterface;
 use Psr\Cache\CacheItemInterface;
+use Psr\Clock\ClockInterface;
 
 final class MemoryCacheItem implements CacheItemInterface
 {
@@ -15,6 +15,7 @@ final class MemoryCacheItem implements CacheItemInterface
 
     public function __construct(
         private readonly string $key,
+        private readonly ClockInterface $clock,
         private bool $hit = false,
         private mixed $value = null,
     ) {
@@ -58,7 +59,7 @@ final class MemoryCacheItem implements CacheItemInterface
             return $this;
         }
 
-        $now = new DateTimeImmutable();
+        $now = $this->clock->now();
         $this->expiresAt = is_int($time) ? $now->modify('+' . $time . ' seconds') : $now->add($time);
 
         return $this;
@@ -66,6 +67,6 @@ final class MemoryCacheItem implements CacheItemInterface
 
     public function isExpired(): bool
     {
-        return $this->expiresAt !== null && $this->expiresAt <= new DateTimeImmutable();
+        return $this->expiresAt !== null && $this->expiresAt <= $this->clock->now();
     }
 }

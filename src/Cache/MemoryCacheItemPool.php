@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Challenge\Cache;
 
+use Challenge\Clock\ClockFactory;
 use Psr\Cache\CacheItemInterface;
 use Psr\Cache\CacheItemPoolInterface;
+use Psr\Clock\ClockInterface;
 
 final class MemoryCacheItemPool implements CacheItemPoolInterface
 {
@@ -17,6 +19,13 @@ final class MemoryCacheItemPool implements CacheItemPoolInterface
     /** @var array<string, MemoryCacheItem> */
     private array $deferred = [];
 
+    private readonly ClockInterface $clock;
+
+    public function __construct(?ClockInterface $clock = null)
+    {
+        $this->clock = $clock ?? ClockFactory::createFromEnvironment();
+    }
+
     public function getItem(string $key): CacheItemInterface
     {
         $this->validateKey($key);
@@ -24,7 +33,7 @@ final class MemoryCacheItemPool implements CacheItemPoolInterface
         if (!isset($this->items[$key]) || $this->items[$key]->isExpired()) {
             unset($this->items[$key]);
 
-            return new MemoryCacheItem($key);
+            return new MemoryCacheItem($key, $this->clock);
         }
 
         return clone $this->items[$key];

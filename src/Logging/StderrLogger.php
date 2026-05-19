@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace Challenge\Logging;
 
-use DateTimeImmutable;
-use DateTimeZone;
+use Challenge\Clock\ClockFactory;
+use DateTimeInterface;
 use InvalidArgumentException;
+use Psr\Clock\ClockInterface;
 use Psr\Log\AbstractLogger;
 use Stringable;
 use Throwable;
@@ -33,10 +34,12 @@ final class StderrLogger extends AbstractLogger
     /** @var resource */
     private $stream;
 
+    private readonly ClockInterface $clock;
+
     /**
      * @param resource|null $stream
      */
-    public function __construct($stream = null)
+    public function __construct($stream = null, ?ClockInterface $clock = null)
     {
         if ($stream === null) {
             $stream = fopen('php://stderr', 'ab');
@@ -47,6 +50,7 @@ final class StderrLogger extends AbstractLogger
         }
 
         $this->stream = $stream;
+        $this->clock = $clock ?? ClockFactory::createFromEnvironment();
     }
 
     /**
@@ -56,7 +60,7 @@ final class StderrLogger extends AbstractLogger
     public function log($level, string|Stringable $message, array $context = []): void
     {
         $record = [
-            'timestamp' => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeImmutable::ATOM),
+            'timestamp' => $this->clock->now()->format(DateTimeInterface::ATOM),
             'level' => (string) $level,
             'message' => $this->interpolate((string) $message, $context),
             'context' => $this->normalizeContext($context),
