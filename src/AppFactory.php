@@ -8,6 +8,7 @@ use Challenge\Controllers\ActiveVisitorsController;
 use Challenge\Controllers\HealthController;
 use Challenge\Controllers\SegmentPreviewController;
 use Challenge\Database\ConnectionFactory;
+use Challenge\Logging\LoggerFactory;
 use Challenge\Repositories\SegmentPreviewRepository;
 use Challenge\Repositories\VisitorAnalyticsRepository;
 use Challenge\Services\SegmentPreviewService;
@@ -22,6 +23,8 @@ final class AppFactory
     {
         $app = SlimAppFactory::create();
         $app->addBodyParsingMiddleware();
+        $displayErrorDetails = getenv('APP_ENV') !== 'production';
+        $logger = LoggerFactory::createFromEnvironment();
 
         $pdo = ConnectionFactory::createFromEnvironment();
         $visitorAnalyticsRepository = new VisitorAnalyticsRepository($pdo);
@@ -37,7 +40,7 @@ final class AppFactory
 
         $router->register($app);
 
-        $app->addErrorMiddleware(true, true, true);
+        $app->addErrorMiddleware($displayErrorDetails, true, true, $logger);
 
         return $app;
     }

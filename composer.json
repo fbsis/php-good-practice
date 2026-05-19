@@ -8,6 +8,7 @@
     "ext-json": "*",
     "ext-pdo": "*",
     "ext-pdo_mysql": "*",
+    "psr/log": "^3.0",
     "slim/psr7": "^1.7",
     "slim/slim": "^4.14"
   },
@@ -32,4 +33,3 @@
     "sort-packages": true
   }
 }
-

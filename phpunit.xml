@@ -5,6 +5,9 @@
          colors="true"
          cacheDirectory=".phpunit.cache">
     <testsuites>
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
         <testsuite name="Integration">
             <directory>tests/Integration</directory>
         </testsuite>
@@ -18,4 +21,3 @@
         <env name="DB_PASSWORD" value="analytics_password"/>
     </php>
 </phpunit>
-
