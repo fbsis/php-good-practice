@@ -33,10 +33,9 @@ final class AppFactory
         $healthController = new HealthController($pdo);
         $activeVisitorsController = new ActiveVisitorsController($visitorAnalyticsService);
         $segmentPreviewController = new SegmentPreviewController($segmentPreviewValidator, $segmentPreviewService);
+        $router = new Router($healthController, $activeVisitorsController, $segmentPreviewController);
 
-        $app->get('/health', $healthController);
-        $app->get('/api/accounts/{accountId}/visitors/active', $activeVisitorsController);
-        $app->post('/api/accounts/{accountId}/segments/preview', $segmentPreviewController);
+        $router->register($app);
 
         $app->addErrorMiddleware(true, true, true);
 
