@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Challenge;
 
+use Challenge\Cache\AnalyticsCacheKeyFactory;
+use Challenge\Cache\CacheFactory;
 use Challenge\Controllers\ActiveVisitorsController;
 use Challenge\Controllers\HealthController;
 use Challenge\Controllers\SegmentPreviewController;
@@ -25,12 +27,14 @@ final class AppFactory
         $app->addBodyParsingMiddleware();
         $displayErrorDetails = getenv('APP_ENV') !== 'production';
         $logger = LoggerFactory::createFromEnvironment();
+        $cache = CacheFactory::createFromEnvironment();
+        $cacheKeyFactory = new AnalyticsCacheKeyFactory();
 
         $pdo = ConnectionFactory::createFromEnvironment();
         $visitorAnalyticsRepository = new VisitorAnalyticsRepository($pdo);
         $segmentPreviewRepository = new SegmentPreviewRepository($pdo);
-        $visitorAnalyticsService = new VisitorAnalyticsService($visitorAnalyticsRepository);
-        $segmentPreviewService = new SegmentPreviewService($segmentPreviewRepository);
+        $visitorAnalyticsService = new VisitorAnalyticsService($visitorAnalyticsRepository, $cache, $cacheKeyFactory);
+        $segmentPreviewService = new SegmentPreviewService($segmentPreviewRepository, $cache, $cacheKeyFactory);
         $segmentPreviewValidator = new SegmentPreviewValidator();
 
         $healthController = new HealthController($pdo);
