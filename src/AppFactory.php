@@ -8,6 +8,7 @@ use Challenge\Controllers\ActiveVisitorsController;
 use Challenge\Controllers\HealthController;
 use Challenge\Controllers\SegmentPreviewController;
 use Challenge\Database\ConnectionFactory;
+use Challenge\Repositories\SegmentPreviewRepository;
 use Challenge\Repositories\VisitorAnalyticsRepository;
 use Challenge\Services\SegmentPreviewService;
 use Challenge\Services\VisitorAnalyticsService;
@@ -24,8 +25,9 @@ final class AppFactory
 
         $pdo = ConnectionFactory::createFromEnvironment();
         $visitorAnalyticsRepository = new VisitorAnalyticsRepository($pdo);
+        $segmentPreviewRepository = new SegmentPreviewRepository($pdo);
         $visitorAnalyticsService = new VisitorAnalyticsService($visitorAnalyticsRepository);
-        $segmentPreviewService = new SegmentPreviewService($visitorAnalyticsRepository);
+        $segmentPreviewService = new SegmentPreviewService($segmentPreviewRepository);
         $segmentPreviewValidator = new SegmentPreviewValidator();
 
         $healthController = new HealthController($pdo);

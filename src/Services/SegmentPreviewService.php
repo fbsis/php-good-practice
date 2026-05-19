@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Challenge\Services;
 
-use Challenge\Repositories\VisitorAnalyticsRepository;
+use Challenge\Repositories\SegmentPreviewRepository;
 
 final class SegmentPreviewService
 {
-    public function __construct(private readonly VisitorAnalyticsRepository $visitorAnalyticsRepository)
+    public function __construct(private readonly SegmentPreviewRepository $segmentPreviewRepository)
     {
     }
 
@@ -26,8 +26,8 @@ final class SegmentPreviewService
     public function preview(int $accountId, array $rules): array
     {
         return [
-            'count' => $this->visitorAnalyticsRepository->countSegmentPreviewVisitors($accountId, $rules),
-            'visitors' => $this->visitorAnalyticsRepository->segmentPreviewVisitors($accountId, $rules),
+            'count' => $this->segmentPreviewRepository->countMatchingVisitors($accountId, $rules),
+            'visitors' => $this->segmentPreviewRepository->matchingVisitors($accountId, $rules),
         ];
     }
 }
