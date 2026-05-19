@@ -25,15 +25,15 @@ final class SegmentPreviewController
     {
         $validation = $this->validator->validate($request->getParsedBody());
 
-        if (!$validation['valid']) {
+        if (!$validation->valid) {
             return JsonResponder::json($response, [
                 'error' => 'validation_failed',
-                'fields' => $validation['fields'],
+                'fields' => $validation->fields,
             ], 422);
         }
 
         $accountId = (int) $args['accountId'];
-        $preview = $this->segmentPreviewService->preview($accountId, $validation['value']);
+        $preview = $this->segmentPreviewService->preview($accountId, $validation->value);
 
         return JsonResponder::json($response, $preview);
     }

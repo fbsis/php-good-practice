@@ -4,37 +4,19 @@ declare(strict_types=1);
 
 namespace Challenge\Validation;
 
+use Challenge\Dto\SegmentPreviewCriteria;
 use DateTimeImmutable;
 
 final class SegmentPreviewValidator
 {
-    /**
-     * @param mixed $payload
-     * @return array{
-     *     valid: bool,
-     *     fields: array<string, list<string>>,
-     *     value: array{
-     *         visited_path: string,
-     *         min_page_views: int,
-     *         identified_only: bool,
-     *         from: string,
-     *         to: string,
-     *         limit: int
-     *     }|null
-     * }
-     */
-    public function validate(mixed $payload): array
+    public function validate(mixed $payload): ValidationResult
     {
         $fields = [];
 
         if (!is_array($payload)) {
-            return [
-                'valid' => false,
-                'fields' => [
-                    'body' => ['Must be a JSON object.'],
-                ],
-                'value' => null,
-            ];
+            return ValidationResult::invalid([
+                'body' => ['Must be a JSON object.'],
+            ]);
         }
 
         $rules = $payload['rules'] ?? null;
@@ -90,25 +72,17 @@ final class SegmentPreviewValidator
         }
 
         if ($fields !== []) {
-            return [
-                'valid' => false,
-                'fields' => $fields,
-                'value' => null,
-            ];
+            return ValidationResult::invalid($fields);
         }
 
-        return [
-            'valid' => true,
-            'fields' => [],
-            'value' => [
-                'visited_path' => $visitedPath,
-                'min_page_views' => $minPageViews,
-                'identified_only' => $identifiedOnly,
-                'from' => $from,
-                'to' => $to,
-                'limit' => $limit,
-            ],
-        ];
+        return ValidationResult::valid(new SegmentPreviewCriteria(
+            visitedPath: $visitedPath,
+            minPageViews: $minPageViews,
+            identifiedOnly: $identifiedOnly,
+            from: $from,
+            to: $to,
+            limit: $limit,
+        ));
     }
 
     private function isDate(string $value): bool

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Challenge\Services;
 
+use Challenge\Dto\SegmentPreviewCriteria;
 use Challenge\Repositories\SegmentPreviewRepository;
 
 final class SegmentPreviewService
@@ -13,21 +14,13 @@ final class SegmentPreviewService
     }
 
     /**
-     * @param array{
-     *     visited_path: string,
-     *     min_page_views: int,
-     *     identified_only: bool,
-     *     from: string,
-     *     to: string,
-     *     limit: int
-     * } $rules
      * @return array{count: int, visitors: list<array<string, mixed>>}
      */
-    public function preview(int $accountId, array $rules): array
+    public function preview(int $accountId, SegmentPreviewCriteria $criteria): array
     {
         return [
-            'count' => $this->segmentPreviewRepository->countMatchingVisitors($accountId, $rules),
-            'visitors' => $this->segmentPreviewRepository->matchingVisitors($accountId, $rules),
+            'count' => $this->segmentPreviewRepository->countMatchingVisitors($accountId, $criteria),
+            'visitors' => $this->segmentPreviewRepository->matchingVisitors($accountId, $criteria),
         ];
     }
 }

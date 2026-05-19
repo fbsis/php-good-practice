@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Challenge\Repositories;
 
+use Challenge\Dto\SegmentPreviewCriteria;
 use PDO;
 use PDOStatement;
 
@@ -13,17 +14,7 @@ final class SegmentPreviewRepository
     {
     }
 
-    /**
-     * @param array{
-     *     visited_path: string,
-     *     min_page_views: int,
-     *     identified_only: bool,
-     *     from: string,
-     *     to: string,
-     *     limit: int
-     * } $rules
-     */
-    public function countMatchingVisitors(int $accountId, array $rules): int
+    public function countMatchingVisitors(int $accountId, SegmentPreviewCriteria $criteria): int
     {
         $statement = $this->pdo->prepare(
             <<<'SQL'
@@ -58,24 +49,16 @@ final class SegmentPreviewRepository
             SQL
         );
 
-        $this->bindValues($statement, $accountId, $rules);
+        $this->bindValues($statement, $accountId, $criteria);
         $statement->execute();
 
         return (int) $statement->fetchColumn();
     }
 
     /**
-     * @param array{
-     *     visited_path: string,
-     *     min_page_views: int,
-     *     identified_only: bool,
-     *     from: string,
-     *     to: string,
-     *     limit: int
-     * } $rules
      * @return list<array<string, mixed>>
      */
-    public function matchingVisitors(int $accountId, array $rules): array
+    public function matchingVisitors(int $accountId, SegmentPreviewCriteria $criteria): array
     {
         $statement = $this->pdo->prepare(
             <<<'SQL'
@@ -114,32 +97,22 @@ final class SegmentPreviewRepository
             SQL
         );
 
-        $this->bindValues($statement, $accountId, $rules);
-        $statement->bindValue('limit', $rules['limit'], PDO::PARAM_INT);
+        $this->bindValues($statement, $accountId, $criteria);
+        $statement->bindValue('limit', $criteria->limit, PDO::PARAM_INT);
         $statement->execute();
 
         return $statement->fetchAll();
     }
 
-    /**
-     * @param array{
-     *     visited_path: string,
-     *     min_page_views: int,
-     *     identified_only: bool,
-     *     from: string,
-     *     to: string,
-     *     limit: int
-     * } $rules
-     */
-    private function bindValues(PDOStatement $statement, int $accountId, array $rules): void
+    private function bindValues(PDOStatement $statement, int $accountId, SegmentPreviewCriteria $criteria): void
     {
         $statement->bindValue('account_id', $accountId, PDO::PARAM_INT);
-        $statement->bindValue('visited_path', $rules['visited_path']);
-        $statement->bindValue('pv_from_date', $rules['from'] . ' 00:00:00');
-        $statement->bindValue('pv_to_date', $rules['to'] . ' 23:59:59');
-        $statement->bindValue('match_from_date', $rules['from'] . ' 00:00:00');
-        $statement->bindValue('match_to_date', $rules['to'] . ' 23:59:59');
-        $statement->bindValue('min_page_views', $rules['min_page_views'], PDO::PARAM_INT);
-        $statement->bindValue('identified_only', $rules['identified_only'] ? 1 : 0, PDO::PARAM_INT);
+        $statement->bindValue('visited_path', $criteria->visitedPath);
+        $statement->bindValue('pv_from_date', $criteria->from . ' 00:00:00');
+        $statement->bindValue('pv_to_date', $criteria->to . ' 23:59:59');
+        $statement->bindValue('match_from_date', $criteria->from . ' 00:00:00');
+        $statement->bindValue('match_to_date', $criteria->to . ' 23:59:59');
+        $statement->bindValue('min_page_views', $criteria->minPageViews, PDO::PARAM_INT);
+        $statement->bindValue('identified_only', $criteria->identifiedOnly ? 1 : 0, PDO::PARAM_INT);
     }
 }
