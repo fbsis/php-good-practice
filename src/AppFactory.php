@@ -10,6 +10,7 @@ use Challenge\Controllers\ActiveVisitorsController;
 use Challenge\Controllers\HealthController;
 use Challenge\Controllers\SegmentPreviewController;
 use Challenge\Database\ConnectionFactory;
+use Challenge\Http\HttpFactory;
 use Challenge\Logging\LoggerFactory;
 use Challenge\Repositories\SegmentPreviewRepository;
 use Challenge\Repositories\VisitorAnalyticsRepository;
@@ -23,7 +24,7 @@ final class AppFactory
 {
     public static function create(): App
     {
-        $app = SlimAppFactory::create();
+        $app = SlimAppFactory::create(HttpFactory::responseFactory());
         $app->addBodyParsingMiddleware();
         $displayErrorDetails = getenv('APP_ENV') !== 'production';
         $logger = LoggerFactory::createFromEnvironment();

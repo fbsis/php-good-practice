@@ -6,10 +6,10 @@ namespace Challenge\Tests\Integration;
 
 use Challenge\AppFactory;
 use Challenge\Database\ConnectionFactory;
+use Challenge\Http\HttpFactory;
 use PDO;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
-use Slim\Psr7\Factory\ServerRequestFactory;
 
 abstract class IntegrationTestCase extends TestCase
 {
@@ -37,7 +37,7 @@ abstract class IntegrationTestCase extends TestCase
             $uri .= '?' . http_build_query($query);
         }
 
-        $request = (new ServerRequestFactory())->createServerRequest($method, $uri);
+        $request = HttpFactory::serverRequestFactory()->createServerRequest($method, $uri);
 
         if ($json !== null) {
             $request->getBody()->write((string) json_encode($json, JSON_THROW_ON_ERROR));
