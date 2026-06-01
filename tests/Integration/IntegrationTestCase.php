@@ -6,10 +6,10 @@ namespace Challenge\Tests\Integration;
 
 use Challenge\AppFactory;
 use Challenge\Database\ConnectionFactory;
+use Challenge\Http\HttpFactory;
 use PDO;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
-use Slim\Psr7\Factory\ServerRequestFactory;
 
 abstract class IntegrationTestCase extends TestCase
 {
@@ -26,7 +26,7 @@ abstract class IntegrationTestCase extends TestCase
 
     /**
      * @param array<string, string> $query
-     * @param array<string, mixed>|null $json
+     * @param array<string, scalar|array<array-key, scalar|null>|null>|null $json
      */
     protected function request(string $method, string $path, array $query = [], ?array $json = null): ResponseInterface
     {
@@ -37,7 +37,7 @@ abstract class IntegrationTestCase extends TestCase
             $uri .= '?' . http_build_query($query);
         }
 
-        $request = (new ServerRequestFactory())->createServerRequest($method, $uri);
+        $request = HttpFactory::serverRequestFactory()->createServerRequest($method, $uri);
 
         if ($json !== null) {
             $request->getBody()->write((string) json_encode($json, JSON_THROW_ON_ERROR));
@@ -50,7 +50,7 @@ abstract class IntegrationTestCase extends TestCase
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array<string, scalar|array<array-key, scalar|array<array-key, scalar|null>|null>|null>
      */
     protected function json(ResponseInterface $response): array
     {
@@ -65,4 +65,3 @@ abstract class IntegrationTestCase extends TestCase
         $this->pdo->exec($sql);
     }
 }
-

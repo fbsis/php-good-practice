@@ -15,11 +15,7 @@ final class VisitorAnalyticsRepository
     /**
      * Returns active visitors for an account.
      *
-     * Assessment note: this method is intentionally flawed. The joins below
-     * make repeated identity events inflate page_view_count, and the date
-     * filter is too loose for a production analytics query.
-     *
-     * @return list<array<string, mixed>>
+     * @return list<array<string, scalar|null>>
      */
     public function activeVisitors(int $accountId, string $from, string $to): array
     {
@@ -27,19 +23,31 @@ final class VisitorAnalyticsRepository
             <<<'SQL'
             SELECT
                 v.external_id AS visitor_id,
-                MAX(ie.email) AS email,
-                MAX(ie.company) AS company,
-                COUNT(pv.id) AS page_view_count,
-                MAX(pv.occurred_at) AS last_seen_at,
-                COUNT(pv.id) + (CASE WHEN MAX(ie.email) IS NULL THEN 0 ELSE 10 END) AS engagement_score
+                ie.email AS email,
+                ie.company AS company,
+                pv.page_view_count AS page_view_count,
+                pv.last_seen_at AS last_seen_at,
+                pv.page_view_count + (CASE WHEN ie.email IS NULL THEN 0 ELSE 10 END) AS engagement_score
             FROM visitors v
-            LEFT JOIN page_views pv ON pv.visitor_id = v.id
-            LEFT JOIN identity_events ie ON ie.visitor_id = v.id
+            INNER JOIN (
+                SELECT
+                    visitor_id,
+                    COUNT(*) AS page_view_count,
+                    MAX(occurred_at) AS last_seen_at
+                FROM page_views
+                WHERE occurred_at >= :from_date
+                  AND occurred_at <= :to_date
+                GROUP BY visitor_id
+            ) pv ON pv.visitor_id = v.id
+            LEFT JOIN identity_events ie ON ie.id = (
+                SELECT latest_identity.id
+                FROM identity_events latest_identity
+                WHERE latest_identity.visitor_id = v.id
+                ORDER BY latest_identity.occurred_at DESC, latest_identity.id DESC
+                LIMIT 1
+            )
             WHERE v.account_id = :account_id
-              AND pv.occurred_at >= :from_date
-              OR pv.occurred_at <= :to_date
-            GROUP BY v.id, v.external_id
-            ORDER BY last_seen_at DESC, engagement_score DESC
+            ORDER BY pv.last_seen_at DESC, engagement_score DESC
             SQL
         );
 
@@ -52,4 +60,3 @@ final class VisitorAnalyticsRepository
         return $statement->fetchAll();
     }
 }
-

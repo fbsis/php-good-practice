@@ -74,5 +74,88 @@ final class SegmentPreviewTest extends IntegrationTestCase
         self::assertSame(3, $payload['count']);
         self::assertSame(['v_1001', 'v_1002'], array_column($payload['visitors'], 'visitor_id'));
     }
-}
 
+    public function testSegmentPreviewDefaultsLimitToTwentyFive(): void
+    {
+        $response = $this->request('POST', '/api/accounts/1/segments/preview', json: [
+            'rules' => [
+                'visited_path' => '/pricing',
+                'min_page_views' => 1,
+                'identified_only' => false,
+                'from' => '2026-05-01',
+                'to' => '2026-05-15',
+            ],
+        ]);
+
+        self::assertSame(200, $response->getStatusCode());
+
+        $payload = $this->json($response);
+
+        self::assertSame(3, $payload['count']);
+        self::assertSame(['v_1001', 'v_1002', 'v_1003'], array_column($payload['visitors'], 'visitor_id'));
+    }
+
+    public function testSegmentPreviewEnforcesAccountIsolation(): void
+    {
+        $response = $this->request('POST', '/api/accounts/2/segments/preview', json: [
+            'rules' => [
+                'visited_path' => '/pricing',
+                'min_page_views' => 1,
+                'identified_only' => false,
+                'from' => '2026-05-01',
+                'to' => '2026-05-15',
+            ],
+            'limit' => 25,
+        ]);
+
+        self::assertSame(200, $response->getStatusCode());
+
+        $payload = $this->json($response);
+
+        self::assertSame(1, $payload['count']);
+        self::assertSame(['v_2001'], array_column($payload['visitors'], 'visitor_id'));
+    }
+
+    public function testSegmentPreviewIdentifiedOnlyExcludesAnonymousVisitors(): void
+    {
+        $response = $this->request('POST', '/api/accounts/1/segments/preview', json: [
+            'rules' => [
+                'visited_path' => '/pricing',
+                'min_page_views' => 1,
+                'identified_only' => true,
+                'from' => '2026-05-01',
+                'to' => '2026-05-15',
+            ],
+            'limit' => 25,
+        ]);
+
+        self::assertSame(200, $response->getStatusCode());
+
+        $payload = $this->json($response);
+
+        self::assertSame(2, $payload['count']);
+        self::assertSame(['v_1001', 'v_1002'], array_column($payload['visitors'], 'visitor_id'));
+    }
+
+    public function testSegmentPreviewRejectsMalformedDates(): void
+    {
+        $response = $this->request('POST', '/api/accounts/1/segments/preview', json: [
+            'rules' => [
+                'visited_path' => '/pricing',
+                'min_page_views' => 1,
+                'identified_only' => false,
+                'from' => '2026-99-01',
+                'to' => '2026-05-99',
+            ],
+            'limit' => 25,
+        ]);
+
+        self::assertSame(422, $response->getStatusCode());
+
+        $payload = $this->json($response);
+
+        self::assertSame('validation_failed', $payload['error']);
+        self::assertArrayHasKey('rules.from', $payload['fields']);
+        self::assertArrayHasKey('rules.to', $payload['fields']);
+    }
+}

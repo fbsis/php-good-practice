@@ -4,11 +4,19 @@ declare(strict_types=1);
 
 namespace Challenge;
 
+use Challenge\Cache\AnalyticsCacheKeyFactory;
+use Challenge\Cache\CacheFactory;
+use Challenge\Controllers\ActiveVisitorsController;
+use Challenge\Controllers\HealthController;
+use Challenge\Controllers\SegmentPreviewController;
 use Challenge\Database\ConnectionFactory;
-use Challenge\Http\JsonResponder;
+use Challenge\Http\HttpFactory;
+use Challenge\Logging\LoggerFactory;
+use Challenge\Repositories\SegmentPreviewRepository;
 use Challenge\Repositories\VisitorAnalyticsRepository;
-use Psr\Http\Message\ResponseInterface as Response;
-use Psr\Http\Message\ServerRequestInterface as Request;
+use Challenge\Services\SegmentPreviewService;
+use Challenge\Services\VisitorAnalyticsService;
+use Challenge\Validation\SegmentPreviewValidator;
 use Slim\App;
 use Slim\Factory\AppFactory as SlimAppFactory;
 
@@ -16,45 +24,29 @@ final class AppFactory
 {
     public static function create(): App
     {
-        $app = SlimAppFactory::create();
+        $app = SlimAppFactory::create(HttpFactory::responseFactory());
         $app->addBodyParsingMiddleware();
+        $displayErrorDetails = getenv('APP_ENV') !== 'production';
+        $logger = LoggerFactory::createFromEnvironment();
+        $cache = CacheFactory::createFromEnvironment();
+        $cacheKeyFactory = new AnalyticsCacheKeyFactory();
 
         $pdo = ConnectionFactory::createFromEnvironment();
-        $repository = new VisitorAnalyticsRepository($pdo);
+        $visitorAnalyticsRepository = new VisitorAnalyticsRepository($pdo);
+        $segmentPreviewRepository = new SegmentPreviewRepository($pdo);
+        $visitorAnalyticsService = new VisitorAnalyticsService($visitorAnalyticsRepository, $cache, $cacheKeyFactory);
+        $segmentPreviewService = new SegmentPreviewService($segmentPreviewRepository, $cache, $cacheKeyFactory);
+        $segmentPreviewValidator = new SegmentPreviewValidator();
 
-        $app->get('/health', function (Request $request, Response $response) use ($pdo): Response {
-            $pdo->query('SELECT 1')->fetchColumn();
+        $healthController = new HealthController($pdo);
+        $activeVisitorsController = new ActiveVisitorsController($visitorAnalyticsService);
+        $segmentPreviewController = new SegmentPreviewController($segmentPreviewValidator, $segmentPreviewService);
+        $router = new Router($healthController, $activeVisitorsController, $segmentPreviewController);
 
-            return JsonResponder::json($response, [
-                'status' => 'ok',
-                'database' => 'connected',
-            ]);
-        });
+        $router->register($app);
 
-        $app->get('/api/accounts/{accountId}/visitors/active', function (Request $request, Response $response, array $args) use ($repository): Response {
-            $accountId = (int) $args['accountId'];
-            $query = $request->getQueryParams();
-
-            $from = is_string($query['from'] ?? null) ? $query['from'] : '';
-            $to = is_string($query['to'] ?? null) ? $query['to'] : '';
-
-            $visitors = $repository->activeVisitors($accountId, $from, $to);
-
-            return JsonResponder::json($response, [
-                'data' => $visitors,
-            ]);
-        });
-
-        $app->post('/api/accounts/{accountId}/segments/preview', function (Request $request, Response $response): Response {
-            return JsonResponder::json($response, [
-                'error' => 'not_implemented',
-                'message' => 'Segment preview is intentionally incomplete for this assessment.',
-            ], 501);
-        });
-
-        $app->addErrorMiddleware(true, true, true);
+        $app->addErrorMiddleware($displayErrorDetails, true, true, $logger);
 
         return $app;
     }
 }
-
